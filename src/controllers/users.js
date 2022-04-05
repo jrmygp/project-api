@@ -1,6 +1,7 @@
-const { User } = require("../lib/sequelize");
+const { User, Post } = require("../lib/sequelize");
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
+const { generateToken } = require("../lib/jwt");
 
 const userControllers = {
   registerUser: async (req, res) => {
@@ -57,17 +58,67 @@ const userControllers = {
         });
       }
       delete findUser.dataValues.password;
+      const token = generateToken({
+        id: findUser.id
+      })
       return res.status(200).json({
         message: "Logged in user",
         result: {
           user: findUser,
-          token: "12345",
+          token
         },
       });
     } catch (err) {
       console.log(err);
       res.status(500).json({
         message: "Server Error",
+      });
+    }
+  },
+  keepLogin: async (req, res) => {
+    console.log("KONTTOOOLLLL")
+    try {
+      const { token } = req;
+      const renewedToken = generateToken({ id: token.id });
+      const findUser = await User.findByPk(token.id);
+
+      delete findUser.dataValues.password;
+      return res.status(200).json({
+        message: "Renewed user token",
+        result: findUser,
+        token: renewedToken,
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+        message: "Server Error",
+      });
+    }
+  },
+  getUser: async (req, res) => {
+    try {
+      const {id} = req.params;
+      console.log(id)
+
+      const findUser = await User.findOne({
+        where: {
+          id
+        },
+        include: [
+          {
+            model: Post,
+          }
+        ],
+      });
+
+      return res.status(200).json({
+        message: "User found",
+        result: findUser,
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({
+        message: err.message,
       });
     }
   },

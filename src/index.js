@@ -18,8 +18,11 @@ app.get("/", (req, res) => {
     res.send("<h1>Welcome to my API </h1>")
 })
 
-const { userRoutes } = require("./routers")
+const { userRoutes, postRoutes, commentRoutes } = require("./routers")
+app.use("/post_images", express.static(`${__dirname}/public/posts`))
 app.use("/user", userRoutes)
+app.use("/posts", postRoutes)
+app.use("/comments", commentRoutes)
 
 
 app.listen(PORT, () => {
