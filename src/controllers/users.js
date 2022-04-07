@@ -1,7 +1,12 @@
-const { User, Post } = require("../lib/sequelize");
+const { User, Post, VerificationToken } = require("../lib/sequelize");
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../lib/jwt");
+const mailer = require("../lib/mailer")
+const  mustache  = require("mustache")
+const fs = require("fs")
+const { nanoid } = require("nanoid")
+const  moment  = require("moment")
 
 const userControllers = {
   registerUser: async (req, res) => {
@@ -27,6 +32,28 @@ const userControllers = {
         full_name,
         profile_picture
       });
+
+      // verif email
+     const verificationToken = nanoid(40)
+
+     await VerificationToken.create({
+       token: verificationToken,
+       user_id: createNewUser.id,
+       valid_until: moment().add(1, "hour")
+     })
+     const verificationLink = `http://localhost:2000/user/verify/${verificationToken}`;
+
+    const template = fs.readFileSync(__dirname + "/../templates/verify.html").toString()
+
+    const renderedTemplate = mustache.render(template, {
+      username,
+      verify_url: verificationLink
+    })
+    await mailer({
+      to: email,
+      subject: "Verify your account!",
+      html: renderedTemplate
+    })
       return res.status(201).json({
         message: "New user created",
       });
@@ -37,6 +64,106 @@ const userControllers = {
       });
     }
   },
+
+  verifyUser: async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      const findToken = await VerificationToken.findOne({
+        where: {
+          token,
+          is_valid: true,
+          valid_until: {
+            [Op.gt]: moment().utc(),
+          },
+        },
+      });
+
+      if (!findToken) {
+        return res.status(400).json({
+          message: "Your token is invalid"
+        })
+      }
+
+      await User.update(
+        { is_verified: true },
+        {
+          where: {
+            id: findToken.user_id,
+          },
+        }
+      );
+     
+        findToken.is_valid = false
+        findToken.save()
+
+      return res.redirect(
+        `http://localhost:3000/verification-success?referral=${token}`
+      );
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+        message: "Server Error",
+      });
+    }
+  },
+  
+  resendVerificationEmail: async (req, res) => {
+    try {
+      const userId = req.token.id;
+      const findUser = await User.findByPk(userId);
+
+      if (findUser.is_verified) {
+        return res.status(400).json({
+          message: "User is already verified",
+        });
+      }
+
+      const verificationToken = nanoid(40);
+
+      await VerificationToken.update({
+        is_valid: false,
+      },
+      {
+        where : {
+        is_valid: true,
+        user_id: userId
+      }
+      })
+
+      await VerificationToken.create({
+        token: verificationToken,
+        user_id: findUser.id,
+        valid_until: moment().add(1, "hour"),
+      });
+
+      const verificationLink = `http://localhost:2020/auth/v2/verify/${verificationToken}`;
+
+      const template = fs
+        .readFileSync(__dirname + "/../templates/verify.html")
+        .toString();
+
+      const renderedTemplate = mustache.render(template, {
+        username: findUser.username,
+        verify_url: verificationLink,
+      });
+      await mailer({
+        to: findUser.email,
+        subject: "Verify your account!",
+        html: renderedTemplate,
+      });
+  
+      return res.status(201).json({
+        message: "Account registered successfully!",
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+        message: "Server Error",
+      });
+    }
+  },
+
   loginUser: async (req, res) => {
     try {
       const { username, password } = req.body;
@@ -76,7 +203,6 @@ const userControllers = {
     }
   },
   keepLogin: async (req, res) => {
-    console.log("KONTTOOOLLLL")
     try {
       const { token } = req;
       const renewedToken = generateToken({ id: token.id });

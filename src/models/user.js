@@ -25,6 +25,14 @@ const User = (sequelize) => {
     profile_picture: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    bio: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   });
 };
