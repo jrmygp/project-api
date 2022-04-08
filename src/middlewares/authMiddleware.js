@@ -2,7 +2,6 @@ const res = require("express/lib/response");
 const { verifyToken } = require("../lib/jwt");
 
 const authorizedLoggenInUser = (req, res, next) => {
-    console.log("MIDDLEWARE")
   try {
     const token = req.headers.authorization;
 
