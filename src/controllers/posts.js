@@ -19,10 +19,11 @@ const postControllers = {
         include: [
           {
             model: User,
+            as: "post_user",
           },
           {
-            model: Like,
-            include: User,
+            model: User,
+            as: "user_like",
           },
           {
             model: Comment,
@@ -156,22 +157,24 @@ const postControllers = {
           message: "You haven't liked the post yet",
         });
       }
-      await Like.destroy({
-        user_id: userId,
-        post_id: postId,
-      });
 
       await Post.increment({ like_count: -1 }, { where: { id: postId } });
+      await Like.destroy({
+        where: {
+          user_id: userId,
+          post_id: postId,
+        },
+      });
       return res.status(201).json({
         message: "Unliked post success!",
       });
     } catch (err) {
-      console.log(err)
+      console.log(err);
       res.status(500).json({
         message: "Server Error",
       });
     }
-  }
+  },
 };
 
 module.exports = postControllers;

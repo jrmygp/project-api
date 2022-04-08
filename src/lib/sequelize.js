@@ -17,10 +17,14 @@ const Comment = require("../models/comment")(sequelize);
 const VerificationToken = require("../models/verification_tokens")(sequelize)
 
 // HUBUNGAN POST KE USER (1 : M)
-Post.belongsTo(User, { foreignKey: "user_id"})
-User.hasMany(Post, { foreignKey: "user_id"})
+Post.belongsTo(User, { foreignKey: "user_id", as: "post_user"})
+User.hasMany(Post, { foreignKey: "user_id", as: "post_user"})
 
 // HUBUNGAN POST KE USER MELALUI TABLE LIKE (M : M)
+User.belongsToMany(Post, {through: Like, foreignKey: "user_id", as: "user_like"})
+Post.belongsToMany(User, {through: Like, foreignKey: "user_id", as: "user_like"})
+
+// HUBUNGAN USER-LIKE-POST (1 : M)
 User.hasMany(Like, { foreignKey: "user_id"})
 Like.belongsTo(User, { foreignKey: "user_id"})
 Post.hasMany(Like, { foreignKey: "post_id"})
