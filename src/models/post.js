@@ -18,6 +18,10 @@ const Post = (sequelize) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    dislike_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
   });
 };
 
