@@ -9,5 +9,6 @@ router.post("/resend-verification", userControllers.resendVerificationEmail)
 router.post("/login", userControllers.loginUser);
 router.get("/refresh-token", authorizedLoggenInUser, userControllers.keepLogin);
 router.get("/:id", userControllers.getUser);
+router.patch("/:id", userControllers.editUser)
 
 module.exports = router;

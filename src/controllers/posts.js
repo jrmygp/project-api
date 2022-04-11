@@ -24,6 +24,10 @@ const postControllers = {
           {
             model: User,
             as: "user_like",
+            // where: {
+            //   id: req.token.id
+            // },
+            // required: false
           },
           {
             model: Comment,
@@ -31,6 +35,7 @@ const postControllers = {
           },
         ],
         distinct: true,
+        
         order: _sortBy ? [[_sortBy, _sortDir]] : undefined,
       });
 
@@ -116,6 +121,7 @@ const postControllers = {
   addLikePost: async (req, res) => {
     try {
       const { userId, postId } = req.params;
+      console.log (userId, postId)
       const isUserAlreadyLike = await Like.findOne({
         where: {
           user_id: userId,

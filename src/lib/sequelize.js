@@ -22,7 +22,7 @@ User.hasMany(Post, { foreignKey: "user_id", as: "post_user"})
 
 // HUBUNGAN POST KE USER MELALUI TABLE LIKE (M : M)
 User.belongsToMany(Post, {through: Like, foreignKey: "user_id", as: "user_like"})
-Post.belongsToMany(User, {through: Like, foreignKey: "user_id", as: "user_like"})
+Post.belongsToMany(User, {through: Like, foreignKey: "post_id", as: "user_like"})
 
 // HUBUNGAN USER-LIKE-POST (1 : M)
 User.hasMany(Like, { foreignKey: "user_id"})

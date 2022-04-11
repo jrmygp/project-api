@@ -1,5 +1,6 @@
 const {postControllers} = require("../controllers")
 const fileUploader = require("../lib/uploader")
+const authorizedLoggenInUser = require("../middlewares/authMiddleware")
 
 const router = require("express").Router()
 
@@ -15,3 +16,4 @@ router.post("/:postId/likes/:userId", postControllers.addLikePost)
 router.delete("/:postId/likes/:userId", postControllers.removeLikePost)
 
 module.exports = router
+

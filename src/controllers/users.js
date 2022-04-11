@@ -2,16 +2,23 @@ const { User, Post, VerificationToken } = require("../lib/sequelize");
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../lib/jwt");
-const mailer = require("../lib/mailer")
-const  mustache  = require("mustache")
-const fs = require("fs")
-const { nanoid } = require("nanoid")
-const  moment  = require("moment")
+const mailer = require("../lib/mailer");
+const mustache = require("mustache");
+const fs = require("fs");
+const { nanoid } = require("nanoid");
+const moment = require("moment");
 
 const userControllers = {
   registerUser: async (req, res) => {
     try {
-      const { username, tag_name, email, password, full_name, profile_picture } = req.body;
+      const {
+        username,
+        tag_name,
+        email,
+        password,
+        full_name,
+        profile_picture,
+      } = req.body;
 
       const isUserAlreadyTaken = await User.findOne({
         where: {
@@ -30,30 +37,32 @@ const userControllers = {
         email,
         password: hashedPassword,
         full_name,
-        profile_picture
+        profile_picture,
       });
 
       // verif email
-     const verificationToken = nanoid(40)
+      const verificationToken = nanoid(40);
 
-     await VerificationToken.create({
-       token: verificationToken,
-       user_id: createNewUser.id,
-       valid_until: moment().add(1, "hour")
-     })
-     const verificationLink = `http://localhost:2000/user/verify/${verificationToken}`;
+      await VerificationToken.create({
+        token: verificationToken,
+        user_id: createNewUser.id,
+        valid_until: moment().add(1, "hour"),
+      });
+      const verificationLink = `http://localhost:2000/user/verify/${verificationToken}`;
 
-    const template = fs.readFileSync(__dirname + "/../templates/verify.html").toString()
+      const template = fs
+        .readFileSync(__dirname + "/../templates/verify.html")
+        .toString();
 
-    const renderedTemplate = mustache.render(template, {
-      username,
-      verify_url: verificationLink
-    })
-    await mailer({
-      to: email,
-      subject: "Verify your account!",
-      html: renderedTemplate
-    })
+      const renderedTemplate = mustache.render(template, {
+        username,
+        verify_url: verificationLink,
+      });
+      await mailer({
+        to: email,
+        subject: "Verify your account!",
+        html: renderedTemplate,
+      });
       return res.status(201).json({
         message: "New user created",
       });
@@ -81,8 +90,8 @@ const userControllers = {
 
       if (!findToken) {
         return res.status(400).json({
-          message: "Your token is invalid"
-        })
+          message: "Your token is invalid",
+        });
       }
 
       await User.update(
@@ -93,9 +102,9 @@ const userControllers = {
           },
         }
       );
-     
-        findToken.is_valid = false
-        findToken.save()
+
+      findToken.is_valid = false;
+      findToken.save();
 
       return res.redirect(
         `http://localhost:3000/verification-success?referral=${token}`
@@ -107,7 +116,7 @@ const userControllers = {
       });
     }
   },
-  
+
   resendVerificationEmail: async (req, res) => {
     try {
       const userId = req.token.id;
@@ -121,15 +130,17 @@ const userControllers = {
 
       const verificationToken = nanoid(40);
 
-      await VerificationToken.update({
-        is_valid: false,
-      },
-      {
-        where : {
-        is_valid: true,
-        user_id: userId
-      }
-      })
+      await VerificationToken.update(
+        {
+          is_valid: false,
+        },
+        {
+          where: {
+            is_valid: true,
+            user_id: userId,
+          },
+        }
+      );
 
       await VerificationToken.create({
         token: verificationToken,
@@ -152,7 +163,7 @@ const userControllers = {
         subject: "Verify your account!",
         html: renderedTemplate,
       });
-  
+
       return res.status(201).json({
         message: "Account registered successfully!",
       });
@@ -167,7 +178,7 @@ const userControllers = {
   loginUser: async (req, res) => {
     try {
       const { username, password } = req.body;
-      console.log(req.body)
+      console.log(req.body);
       const findUser = await User.findOne({
         where: {
           username,
@@ -186,13 +197,13 @@ const userControllers = {
       }
       delete findUser.dataValues.password;
       const token = generateToken({
-        id: findUser.id
-      })
+        id: findUser.id,
+      });
       return res.status(200).json({
         message: "Logged in user",
         result: {
           user: findUser,
-          token
+          token,
         },
       });
     } catch (err) {
@@ -223,17 +234,17 @@ const userControllers = {
   },
   getUser: async (req, res) => {
     try {
-      const {id} = req.params;
-      console.log(id)
+      const { id } = req.params;
 
       const findUser = await User.findOne({
         where: {
-          id
+          id,
         },
         include: [
           {
             model: Post,
-          }
+            as: "post_user"
+          },
         ],
       });
 
@@ -245,6 +256,42 @@ const userControllers = {
       console.log(err);
       return res.status(400).json({
         message: err.message,
+      });
+    }
+  },
+  editUser: async (req, res) => {
+    try {
+      const { id } = req.params;
+      // cari user yang punya username / full name yang sama
+      const { username } = req.body;
+      const findUser = await User.findOne({
+        where: {
+          username,
+        },
+      });
+      if (findUser) {
+        return res.status(400).json({
+          message: "Username already taken!",
+        });
+      }
+      const updatedUser = await User.update(
+        {
+          ...req.body,
+        },
+        {
+          where: {
+            id,
+          },
+        }
+      );
+      res.status(201).json({
+        message: "User edited successfully",
+        result: updatedUser,
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message: "Server Error",
       });
     }
   },
