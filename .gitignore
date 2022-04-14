@@ -1,3 +1,4 @@
 node_modules
 .env
 src/public/posts/**
+src/public/avatar/**

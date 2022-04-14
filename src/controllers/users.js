@@ -243,7 +243,7 @@ const userControllers = {
         include: [
           {
             model: Post,
-            as: "post_user"
+            as: "post_user",
           },
         ],
       });
@@ -262,18 +262,31 @@ const userControllers = {
   editUser: async (req, res) => {
     try {
       const { id } = req.params;
-      // cari user yang punya username / full name yang sama
       const { username } = req.body;
-      const findUser = await User.findOne({
-        where: {
-          username,
-        },
-      });
-      if (findUser) {
-        return res.status(400).json({
-          message: "Username already taken!",
+
+      // Hanya ketrigger ketika user ganti username
+      if (username) {
+        const findUser = await User.findOne({
+          where: {
+            username,
+          },
         });
+
+        if (findUser) {
+          return res.status(400).json({
+            message: "Username already taken!",
+          });
+        }
       }
+
+      if (req.file) {
+        const uploadFileDomain = process.env.UPLOAD_FILE_DOMAIN;
+        const filePath = "avatar";
+        const { filename } = req.file;
+
+        req.body.profile_picture = `${uploadFileDomain}/${filePath}/${filename}`
+      }
+
       const updatedUser = await User.update(
         {
           ...req.body,
@@ -294,7 +307,7 @@ const userControllers = {
         message: "Server Error",
       });
     }
-  },
+  }
 };
 
 module.exports = userControllers;

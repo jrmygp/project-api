@@ -20,6 +20,7 @@ app.get("/", (req, res) => {
 
 const { userRoutes, postRoutes, commentRoutes } = require("./routers")
 app.use("/post_images", express.static(`${__dirname}/public/posts`))
+app.use("/avatar", express.static(`${__dirname}/public/avatar`))
 app.use("/user", userRoutes)
 app.use("/posts", postRoutes)
 app.use("/comments", commentRoutes)
