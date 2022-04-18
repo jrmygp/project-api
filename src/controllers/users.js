@@ -22,7 +22,7 @@ const userControllers = {
 
       const isUserAlreadyTaken = await User.findOne({
         where: {
-          [Op.or]: [{ username }, { email }, { tag_name }],
+          [Op.or]: [{ username }, { email }],
         },
       });
       if (isUserAlreadyTaken) {
