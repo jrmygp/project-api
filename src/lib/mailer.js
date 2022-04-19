@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer")
 const transport = nodemailer.createTransport({
     auth: {
         user: "jeremyPWD17@gmail.com",
-        pass: process.env.PASSWORD
+        pass: "jeremy7410821"
     },
     host: "smtp.gmail.com",
 })

@@ -148,7 +148,7 @@ const userControllers = {
         valid_until: moment().add(1, "hour"),
       });
 
-      const verificationLink = `http://localhost:2020/auth/v2/verify/${verificationToken}`;
+      const verificationLink = `http://localhost:2000/user/verify/${verificationToken}`;
 
       const template = fs
         .readFileSync(__dirname + "/../templates/verify.html")
