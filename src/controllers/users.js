@@ -1,4 +1,4 @@
-const { User, Post, VerificationToken } = require("../lib/sequelize");
+const { User, Post, VerificationToken, ForgotPasswordToken } = require("../lib/sequelize");
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../lib/jwt");
@@ -307,7 +307,98 @@ const userControllers = {
         message: "Server Error",
       });
     }
-  }
+  },
+  sendForgotPasswordEmail: async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      const findUser = await User.findOne({
+        where: {
+          email,
+        }
+      })
+
+      const passwordToken = nanoid(40);
+
+      await ForgotPasswordToken.update({ is_valid: false }, {
+        where: {
+          user_id: findUser.id,
+          is_valid: true
+        }
+      })
+
+      await ForgotPasswordToken.create({
+        token: passwordToken,
+        valid_until: moment().add(1, "hour"),
+        is_valid: true,
+        user_id: findUser.id
+      })
+
+      const forgotPasswordLink =
+        `http://localhost:3000/reset-password?fp_token=${passwordToken}`
+
+      const template = fs.readFileSync(__dirname + "/../templates/forgot.html").toString()
+
+      const renderedTemplate = mustache.render(template, {
+        username: findUser.username,
+        forgot_password_url: forgotPasswordLink
+      })
+
+      await mailer({
+        to: findUser.email,
+        subject: "Reset password",
+        html: renderedTemplate
+      })
+
+      return res.status(201).json({
+        message: "Resent verification email"
+      })
+
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({
+        message: "Server error"
+      })
+    }
+  },
+  changeUserForgotPassword: async (req, res) => {
+    try {
+      const { password, forgotPasswordToken } = req.body;
+
+      const findToken = await ForgotPasswordToken.findOne({
+        where: {
+          token: forgotPasswordToken,
+          is_valid: true,
+          valid_until: {
+            [Op.gt]: moment().utc()
+          }
+        }
+      })
+
+      if (!findToken) {
+        return res.status(400).json({
+          message: "Invalid token"
+        })
+      }
+
+      const hashedPassword = bcrypt.hashSync(password, 5)
+
+      await User.update({ password: hashedPassword }, {
+        where: {
+          id: findToken.user_id
+        }
+      })
+
+      return res.status(200).json({
+        message: "Change password success"
+      })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({
+        message: "Server error"
+      })
+    }
+  },
 };
 
 module.exports = userControllers;
