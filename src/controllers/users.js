@@ -178,7 +178,7 @@ const userControllers = {
   loginUser: async (req, res) => {
     try {
       const { username, password } = req.body;
-      console.log(req.body);
+      // console.log(req.body);
       const findUser = await User.findOne({
         where: {
           username,
