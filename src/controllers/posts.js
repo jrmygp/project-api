@@ -29,6 +29,12 @@ const postControllers = {
             // },
             // required: false
           },
+          // {
+          //   model: Like, 
+          //   where: {
+          //     user_id: req.token.id
+          //   }
+          // },
           {
             model: Comment,
             include: User,
