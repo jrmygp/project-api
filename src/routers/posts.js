@@ -5,7 +5,7 @@ const authorizedLoggenInUser = require("../middlewares/authMiddleware");
 
 const router = require("express").Router();
 
-router.get("/", authorizedLoggenInUser,postControllers.getPost);
+router.get("/", authorizedLoggenInUser, postControllers.getPost);
 router.get("/get-one-post", async (req, res) => {
   try {
     const findPost = await Post.findOne({
@@ -44,6 +44,7 @@ router.get("/get-one-post", async (req, res) => {
     });
   }
 });
+router.get("/get-liked-post", authorizedLoggenInUser, postControllers.getLikedPost)
 router.post(
   "/",
   fileUploader({
