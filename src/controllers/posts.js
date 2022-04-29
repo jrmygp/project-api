@@ -24,10 +24,10 @@ const postControllers = {
           {
             model: User,
             as: "user_like",
-            // where: {
-            //   id: req.token.id
-            // },
-            // required: false
+            where: {
+              id: req.token.id
+            },
+            required: false
           },
           // {
           //   model: Like, 
@@ -65,37 +65,29 @@ const postControllers = {
       delete req.query._sortBy;
       delete req.query._sortDir;
 
-      const findPosts = await Post.findAndCountAll({
+      const findPosts = await Like.findAndCountAll({
         where: {
-          ...req.query,
+          // ...req.query,
+          user_id: req.query.user_id
         },
         limit: _limit ? parseInt(_limit) : undefined,
         offset: (_page - 1) * _limit,
         include: [
           {
             model: User,
-            as: "post_user",
+            as: "like_user",
           },
           {
-            model: User,
-            as: "user_like",
-            // where: {
-            //   id: req.token.id
-            // },
-            // required: false
+            model: Post,
+            as: "post_like",
           },
-          {
-            model: Like, 
-            where: {
-              user_id: req.token.id
-            }
-          }
         ],
         distinct: true,
         
         order: _sortBy ? [[_sortBy, _sortDir]] : undefined,
       });
 
+      
       return res.status(200).json({
         message: "Find posts",
         result: findPosts,
